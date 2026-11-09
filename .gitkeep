@@ -1,0 +1,5 @@
+New-Item -ItemType File -Path data\.gitkeep -Force
+New-Item -ItemType File -Path processed\.gitkeep -Force
+New-Item -ItemType File -Path reports\.gitkeep -Force
+New-Item -ItemType File -Path logs\.gitkeep -Force
+New-Item -ItemType File -Path db\.gitkeep -Force

@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+env/
+
+# Данные (генерируются, не коммитим)
+data/*.csv
+data/*.json
+data/*.xlsx
+processed/*
+!processed/.gitkeep
+
+# База и логи (создаются при запуске)
+db/*.db
+logs/*.log
+
+# Отчёты бенчмарка (перегенерируются)
+reports/*.json
+
+# Локальные артефакты
+config.json
+configs_clean.json
+steps.json
+*.report.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
