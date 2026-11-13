@@ -1,4 +1,5 @@
 """Тесты потоковой обработки, NumPy vs loops, процессов vs последовательной обработки."""
+
 from pathlib import Path
 
 import pandas as pd
@@ -27,6 +28,7 @@ def csv_file(tmp_path: Path) -> Path:
 
 def test_streaming_matches_memory(csv_file: Path) -> None:
     """Потоковая обработка должна давать те же результаты, что in-memory"""
+
     r = bench_streaming_vs_memory(str(csv_file), chunk_size=25)
     assert r["matched"] is True
     assert r["rows"] == 200
@@ -50,6 +52,7 @@ def test_bench_numpy_runs() -> None:
 
 def test_bench_processes_matches_seq() -> None:
     """При объединении результатов не должно быть потерь/дублей"""
+    
     df = pd.DataFrame({"x": list(range(100)) + [10000]})
     r = bench_processes_vs_seq(df, "x", n_processes=2, n_parts=2)
     assert r["matched"] is True

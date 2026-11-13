@@ -1,4 +1,6 @@
-"""Очистка данных. Исходные файлы не изменяются — только DataFrame в памяти."""
+"""Очистка данных. 
+Исходные файлы не изменяются — только DataFrame в памяти."""
+
 import pandas as pd
 
 from utils.logger import get_logger
@@ -10,16 +12,16 @@ def apply_cleaning(df: pd.DataFrame, rules: dict) -> tuple[pd.DataFrame, dict]:
     """Применяет правила очистки по порядку. Возвращает (df, report).
 
     Поддерживаемые ключи rules:
-      drop_duplicates: bool
-      drop_nulls: list[str] | "all"        — удалить строки с NaN в колонках
-      fill_nulls: {col: value}
-      fill_mean: list[str]                 — заполнить средним
-      fill_median: list[str]               — заполнить медианой
-      strip_strings: bool                  — убрать пробелы по краям
-      lower: list[str] | "all"             — к нижнему регистру
-      upper: list[str] | "all"             — к верхнему регистру
-      cast_types: {col: dtype}
-      drop_where: list[dict]               — [{"col": c, "op": ">", "value": v}]
+        drop_duplicates: bool
+        drop_nulls: list[str] | "all"        – удалить строки с NaN в колонках
+        fill_nulls: {col: value}
+        fill_mean: list[str]                 – заполнить средним
+        fill_median: list[str]               – заполнить медианой
+        strip_strings: bool                  – убрать пробелы по краям
+        lower: list[str] | "all"             – к нижнему регистру
+        upper: list[str] | "all"             – к верхнему регистру
+        cast_types: {col: dtype}
+        drop_where: list[dict]               – [{"col": c, "op": ">", "value": v}]
     """
     report: dict = {
         "input_rows": int(len(df)),
@@ -109,7 +111,7 @@ def apply_cleaning(df: pd.DataFrame, rules: dict) -> tuple[pd.DataFrame, dict]:
             if dtype in ("float", "int", float, int):
                 converted = pd.to_numeric(out[col], errors="coerce")
                 if dtype in ("int", int):
-                    converted = converted.astype("Int64")  # nullable int
+                    converted = converted.astype("Int64")                # nullable int
                 out[col] = converted
             elif dtype in ("datetime", "datetime64[ns]", "datetime64"):
                 out[col] = pd.to_datetime(out[col], errors="coerce")

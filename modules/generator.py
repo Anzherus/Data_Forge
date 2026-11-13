@@ -1,4 +1,5 @@
 """Генерация тестовых данных: корректные + специально испорченные, с seed."""
+
 import random
 from datetime import datetime, timedelta
 
@@ -23,9 +24,9 @@ def generate_dataset(
 ) -> pd.DataFrame:
     """Генерирует набор с заданными параметрами загрязнения.
 
-    null_pct / dup_pct / invalid_pct — доли от 0.0 до 1.0.
-    Повторный вызов с тем же seed даёт идентичный результат.
-    """
+    null_pct / dup_pct / invalid_pct – доли от 0.0 до 1.0.
+    Повторный вызов с тем же seed даёт идентичный результат."""
+    
     random.seed(seed)
     np.random.seed(seed)
 
@@ -47,7 +48,7 @@ def generate_dataset(
 
     df = pd.DataFrame(data)
 
-    # --- порча: пропуски ---
+    # порча: пропуски
     if null_pct > 0:
         n_null = int(rows * null_pct)
         for col in df.columns:
@@ -56,7 +57,7 @@ def generate_dataset(
             idx = np.random.choice(df.index, size=min(n_null, len(df)), replace=False)
             df.loc[idx, col] = None
 
-    # --- порча: некорректные значения ---
+    # порча: некорректные значения 
     if invalid_pct > 0:
         n_bad = int(rows * invalid_pct)
         if "value_0" in df.columns and n_bad > 0:
@@ -69,7 +70,7 @@ def generate_dataset(
             idx = np.random.choice(df.index, size=min(n_bad, len(df)), replace=False)
             df.loc[idx, "date"] = "bad-date"
             
-    # --- порча: дубликаты ---
+    # порча: дубликаты 
     if dup_pct > 0:
         n_dup = int(rows * dup_pct)
         if n_dup > 0:

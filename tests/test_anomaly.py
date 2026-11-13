@@ -1,4 +1,5 @@
 """Тесты аномалий: IQR, z-score, bounds, отсутствие автоудаления."""
+
 import pandas as pd
 import pytest
 
@@ -8,6 +9,7 @@ from utils.exceptions import ValidationError
 
 def test_iqr_finds_outlier() -> None:
     """IQR находит выброс, criterion и record сохраняются"""
+    
     df = pd.DataFrame({"x": [1, 2, 3, 4, 5, 1000]})
     found = detect_iqr(df, "x")
     assert len(found) == 1
@@ -32,6 +34,7 @@ def test_bounds() -> None:
 
 def test_no_autodelete() -> None:
     """Аномальные записи не удаляются автоматически"""
+
     df = pd.DataFrame({"x": [1, 2, 3, 1000]})
     before = len(df)
     detect_iqr(df, "x")

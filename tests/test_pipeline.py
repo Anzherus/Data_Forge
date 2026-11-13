@@ -1,4 +1,5 @@
 """Тесты сценариев: выполнение, ошибка с номером шага, сохранение/загрузка, история."""
+
 import pandas as pd
 import pytest
 
@@ -26,6 +27,7 @@ def test_run_pipeline(df) -> None:
 
 def test_pipeline_error_reports_step(df) -> None:
     """При падении сценария должен быть указан номер шага"""
+    
     steps = [
         Step("add_computed", {"name": "x", "expression": "a + b"}),
         Step("drop_columns", {"columns": ["nope"]}),

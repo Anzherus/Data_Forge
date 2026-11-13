@@ -16,10 +16,10 @@ def test_fill_mean_median() -> None:
     df = pd.DataFrame({"x": [1.0, None, 3.0, None, 5.0]})
     out, rep = apply_cleaning(df, {"fill_mean": ["x"]})
     assert out["x"].isna().sum() == 0
-    assert out["x"].iloc[1] == 3.0 # mean([1,3,5])=3.0
+    assert out["x"].iloc[1] == 3.0                              # mean([1,3,5])=3.0
     df2 = pd.DataFrame({"x": [1.0, None, 100.0]})
     out2, _ = apply_cleaning(df2, {"fill_median": ["x"]})
-    assert out2["x"].iloc[1] == 50.5 # median([1,100])
+    assert out2["x"].iloc[1] == 50.5                            # median([1,100])
 
 
 def test_strip_and_lower() -> None:

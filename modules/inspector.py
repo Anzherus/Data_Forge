@@ -8,6 +8,7 @@ log = get_logger("inspector")
 
 def inspect(df: pd.DataFrame) -> dict:
     """rows, cols, columns, dtypes, unique, nulls, min/max, min/max дат."""
+
     if df.empty:
         return {"rows": 0, "cols": 0, "columns": [], "dtypes": {}}
 
@@ -41,9 +42,11 @@ def inspect(df: pd.DataFrame) -> dict:
 
 def head_tail(df: pd.DataFrame, n: int = 5) -> dict:
     """Первые и последние n записей."""
+
     return {"head": df.head(n), "tail": df.tail(n)}
 
 
 def summary(df: pd.DataFrame) -> pd.DataFrame:
     """Общая сводка по набору (как df.describe(include='all'))."""
+    
     return df.describe(include="all").transpose()

@@ -1,8 +1,8 @@
 """DataForge — консольный интерфейс.
 
 Два режима:
-  python main.py                    # интерактивное меню
-  python main.py <команда> [args]   # CLI для скриптов
+  python main.py                    – интерактивное меню
+  python main.py <команда> [args]   – CLI для скриптов
 """
 import argparse
 import json
@@ -36,9 +36,7 @@ def _print_json(obj) -> None:
     print(json.dumps(obj, ensure_ascii=False, indent=2, default=str))
 
 
-# ============================================================
 #  КОМАНДЫ (используются и в CLI, и в интерактивном меню)
-# ============================================================
 
 def cmd_generate(args) -> None:
     df = generate_dataset(
@@ -51,7 +49,7 @@ def cmd_generate(args) -> None:
         seed=args.seed,
     )
     export(df, args.out)
-    print(f"Сгенерировано {len(df)} строк → {args.out}")
+    print(f"Сгенерировано {len(df)} строк -> {args.out}")
 
 
 def cmd_inspect(args) -> None:
@@ -76,7 +74,7 @@ def cmd_clean(args) -> None:
     df = load_file(args.file)
     rules = json.loads(Path(args.rules).read_text(encoding="utf-8")) if args.rules else {}
     if not rules:
-        print("Правила не переданы — данные не изменятся (только копия в out).")
+        print("Правила не переданы – данные не изменятся (только копия в out).")
     out, report = apply_cleaning(df, rules)
     export(out, args.out)
     save_report(report, Path(args.out).with_suffix(".report.json"))
@@ -116,7 +114,7 @@ def cmd_anomalies(args) -> None:
 
     if args.out:
         save_report({"count": len(found), "anomalies": found}, args.out)
-        print(f"Найдено {len(found)} аномалий → {args.out}")
+        print(f"Найдено {len(found)} аномалий -> {args.out}")
     else:
         _print_json({"count": len(found), "anomalies": found})
 
@@ -188,9 +186,7 @@ def cmd_history(args) -> None:
         storage.close()
 
 
-# ============================================================
 #  CLI (argparse)
-# ============================================================
 
 def build_parser() -> argparse.ArgumentParser:
     epilog = """
@@ -306,9 +302,7 @@ def run_cli(argv: list[str]) -> int:
     return 0
 
 
-# ============================================================
 #  Интерактивное меню
-# ============================================================
 
 def _ask(prompt: str, default: str = "", required: bool = False) -> str:
     raw = input(f"{prompt}{f' [{default}]' if default else ''}: ").strip()
@@ -351,6 +345,7 @@ def _pick_file(prompt: str) -> str:
 
 def _pick_column(file: str, prompt: str, numeric_only: bool = False) -> str:
     """Показывает колонки файла и даёт выбрать номером или именем."""
+
     try:
         df = load_file(file)
     except DataForgeError:
@@ -380,7 +375,7 @@ def _pick_column(file: str, prompt: str, numeric_only: bool = False) -> str:
 
 
 def _pause() -> None:
-    input("\nНажмите Enter, чтобы вернуться в меню...")
+    input("\nНажмите Enter, чтобы вернуться в меню.")
 
 
 def _menu_generate() -> None:
@@ -409,7 +404,7 @@ def _menu_validate() -> None:
 
 def _menu_clean() -> None:
     f = _pick_file("Какой файл очистить")
-    rules_path = _ask("Путь к JSON с правилами (Enter — без правил)", "")
+    rules_path = _ask("Путь к JSON с правилами (Enter – без правил)", "")
     out = _ask("Куда сохранить результат", "processed/clean.csv")
     ns = argparse.Namespace(file=f, rules=rules_path or None, out=out)
     cmd_clean(ns)
@@ -442,8 +437,8 @@ def _menu_anomalies() -> None:
 def _menu_export() -> None:
     f = _pick_file("Какой файл экспортировать")
     out = _ask("Куда сохранить", "processed/out.json")
-    cols = _ask("Колонки через запятую (Enter — все)", "")
-    fmt = _ask("Формат (csv/json/xlsx, Enter — по расширению)", "")
+    cols = _ask("Колонки через запятую (Enter – все)", "")
+    fmt = _ask("Формат (csv/json/xlsx, Enter – по расширению)", "")
     cmd_export(argparse.Namespace(
         file=f, out=out,
         columns=cols or None,
@@ -473,7 +468,7 @@ def _menu_scenario_save() -> None:
 def _menu_scenario_run() -> None:
     name = _ask("Имя сценария", required=True)
     f = _pick_file("Входной файл")
-    out = _ask("Куда сохранить результат (Enter — не сохранять)", "")
+    out = _ask("Куда сохранить результат (Enter – не сохранять)", "")
     cmd_scenario_run(argparse.Namespace(
         scenario=name, input=f, out=out or None,
     ))
@@ -492,27 +487,27 @@ def _menu_help() -> None:
 
 
 _MENU = {
-    "1":  ("Сгенерировать тестовые данные",          _menu_generate),
-    "2":  ("Показать структуру файла (inspect)",     _menu_inspect),
-    "3":  ("Проверить качество (validate)",          _menu_validate),
-    "4":  ("Очистить данные (clean)",                _menu_clean),
-    "5":  ("Аналитика (analyze)",                    _menu_analyze),
-    "6":  ("Временной анализ (temporal)",            _menu_temporal),
-    "7":  ("Поиск аномалий (anomalies)",             _menu_anomalies),
-    "8":  ("Экспорт (export)",                       _menu_export),
-    "9":  ("Сохранить сценарий (scenario-save)",     _menu_scenario_save),
-    "10": ("Запустить сценарий (scenario-run)",      _menu_scenario_run),
-    "11": ("Benchmark",                              _menu_benchmark),
-    "12": ("История запусков",                       _menu_history),
-    "13": ("Справка по CLI",                         _menu_help),
-    "0":  ("Выход",                                  None),
+    "1":  ("Сгенерировать тестовые данные;",          _menu_generate),
+    "2":  ("Показать структуру файла (inspect);",     _menu_inspect),
+    "3":  ("Проверить качество (validate);",          _menu_validate),
+    "4":  ("Очистить данные (clean);",                _menu_clean),
+    "5":  ("Аналитика (analyze);",                    _menu_analyze),
+    "6":  ("Временной анализ (temporal);",            _menu_temporal),
+    "7":  ("Поиск аномалий (anomalies);",             _menu_anomalies),
+    "8":  ("Экспорт (export);",                       _menu_export),
+    "9":  ("Сохранить сценарий (scenario-save);",     _menu_scenario_save),
+    "10": ("Запустить сценарий (scenario-run);",      _menu_scenario_run),
+    "11": ("Benchmark;",                              _menu_benchmark),
+    "12": ("История запусков;",                       _menu_history),
+    "13": ("Справка по CLI;",                         _menu_help),
+    "0":  ("Выход.",                                  None),
 }
 
 
 def run_interactive() -> int:
     while True:
         print()
-        print("=== DataForge ===")
+        print("Project DataForge")
         print("Выберите действие:")
         for key, (title, _) in _MENU.items():
             print(f"  {key:>2}) {title}")
@@ -531,14 +526,12 @@ def run_interactive() -> int:
         except (KeyboardInterrupt, EOFError):
             print("\nПрерывание. Выход.")
             return 0
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:                              # noqa: BLE001
             print(f"Ошибка выполнения: {e}")
         _pause()
 
 
-# ============================================================
 #  Точка входа
-# ============================================================
 
 def main(argv: list[str] | None = None) -> int:
     log.info("DataForge старт")

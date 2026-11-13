@@ -1,4 +1,5 @@
 """Тесты инспекции: rows/cols, nulls, unique, min/max, head/tail, summary."""
+
 import pandas as pd
 
 from modules.inspector import head_tail, inspect, summary

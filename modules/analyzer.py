@@ -1,4 +1,5 @@
 """Аналитика: числовая, категориальная, временная, корреляции, сводные."""
+
 import numpy as np
 import pandas as pd
 
@@ -10,6 +11,7 @@ log = get_logger("analyzer")
 
 def numeric_stats(df: pd.DataFrame, columns: list[str] | None = None) -> dict:
     """count, sum, mean, median, min, max, std, quartiles для числовых колонок."""
+
     cols = columns or list(df.select_dtypes(include="number").columns)
     result: dict = {}
     for col in cols:
@@ -37,6 +39,7 @@ def numeric_stats(df: pd.DataFrame, columns: list[str] | None = None) -> dict:
 
 def categorical_stats(df: pd.DataFrame, columns: list[str] | None = None) -> dict:
     """unique count, частоты, топ-значения для категориальных колонок."""
+
     cols = columns or [
         c for c in df.columns
         if not pd.api.types.is_numeric_dtype(df[c])
@@ -69,13 +72,15 @@ _FREQ_ALIASES = {
 
 def _normalize_freq(freq: str) -> str:
     """Приводит старые частоты pandas к новым (M→ME, Y→YE, Q→QE)."""
+
     return _FREQ_ALIASES.get(freq.upper(), freq)
 
 
 def temporal_stats(df: pd.DataFrame, column: str, freq: str = "D") -> pd.DataFrame:
     """Агрегация по дням (D), неделям (W), месяцам (M) и год(YE).
-    Старые алиамы M/Y/Q автоматически приводятся к ME/YE/QE 
-    потому что pandas 3.x требует новые имена"""
+    Старые алиамы M/Y/Q автоматически приводятся к ME/YE/QE, 
+    потому что pandas 3.x требует новые имена."""
+
     if column not in df.columns:
         raise ValidationError(f"Колонка не найдена: {column}")
     s = df[column]
@@ -96,9 +101,10 @@ def temporal_stats(df: pd.DataFrame, column: str, freq: str = "D") -> pd.DataFra
 def correlations(df: pd.DataFrame, columns: list[str] | None = None) -> dict:
     """Матрица корреляций + пары с высоким |r|>=0.7 + оговорка про причинность.
     Возвращает:
-        matrix: {col:{col2:r}}-- матрица кореляций
-        high_pairs: [{a,b,r}] -- пары с |r|>=0.7
-        note: текст про ограничения интерпретации"""
+        matrix: {col:{col2:r}}– матрица кореляций;
+        high_pairs: [{a,b,r}] – пары с |r|>=0.7;
+        note: текст про ограничения интерпретации."""
+    
     cols = columns or list(df.select_dtypes(include="number").columns)
     cols = [c for c in cols if c in df.columns]
     if len(cols) < 2:

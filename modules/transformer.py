@@ -1,4 +1,5 @@
 """Преобразования данных: 9 операций + join с обработкой unmatched."""
+
 import pandas as pd
 
 from utils.exceptions import TransformError
@@ -22,7 +23,8 @@ def drop_columns(df: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
 
 
 def add_computed(df: pd.DataFrame, name: str, expression: str) -> pd.DataFrame:
-    """Вычисляемый столбец. expression — pandas-выражение через df.eval."""
+    """Вычисляемый столбец. expression – pandas-выражение через df.eval."""
+
     try:
         out = df.copy()
         out[name] = out.eval(expression)
@@ -92,6 +94,7 @@ def join_dfs(
     left: pd.DataFrame, right: pd.DataFrame, on: list[str], how: str = "inner"
 ) -> tuple[pd.DataFrame, dict]:
     """Возвращает (df, report) с unmatched-записями."""
+    
     for side, d in (("left", left), ("right", right)):
         missing = [c for c in on if c not in d.columns]
         if missing:

@@ -1,7 +1,7 @@
 """Поиск аномалий: IQR, z-score, пользовательские границы.
 
-Аномальные записи НЕ удаляются — только возвращаются как список.
-"""
+Аномальные записи не удаляются – только возвращаются как список."""
+
 import numpy as np
 import pandas as pd
 
@@ -18,6 +18,7 @@ def _row_to_dict(row: pd.Series) -> dict:
 
 def detect_iqr(df: pd.DataFrame, column: str, factor: float = 1.5) -> list[dict]:
     """Выбросы по межквартильному размаху: < Q1 - k*IQR или > Q3 + k*IQR."""
+
     if column not in df.columns:
         raise ValidationError(f"Колонка не найдена: {column}")
     s = pd.to_numeric(df[column], errors="coerce")
@@ -45,6 +46,7 @@ def detect_iqr(df: pd.DataFrame, column: str, factor: float = 1.5) -> list[dict]
 
 def detect_zscore(df: pd.DataFrame, column: str, threshold: float = 3.0) -> list[dict]:
     """Выбросы по отклонению от среднего: |x - mean| / std > threshold."""
+
     if column not in df.columns:
         raise ValidationError(f"Колонка не найдена: {column}")
     s = pd.to_numeric(df[column], errors="coerce")
@@ -73,6 +75,7 @@ def detect_bounds(
     df: pd.DataFrame, column: str, low: float, high: float
 ) -> list[dict]:
     """Значения вне пользовательских границ [low, high]."""
+    
     if column not in df.columns:
         raise ValidationError(f"Колонка не найдена: {column}")
     s = pd.to_numeric(df[column], errors="coerce")

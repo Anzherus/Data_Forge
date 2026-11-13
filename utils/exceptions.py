@@ -1,6 +1,5 @@
 """Кастомные исключения проекта DataForge."""
 
-
 class DataForgeError(Exception):
     """Базовое исключение проекта."""
 

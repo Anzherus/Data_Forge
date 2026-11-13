@@ -1,4 +1,5 @@
 """Сценарии обработки: Step, Scenario, сохранение в SQLite, воспроизведение."""
+
 from dataclasses import dataclass, asdict
 from datetime import datetime
 
@@ -49,7 +50,8 @@ def run_pipeline(
     storage: Storage | None = None,
     scenario_name: str | None = None,
 ) -> tuple[pd.DataFrame, dict]:
-    """Пошаговое выполнение. При падении — PipelineError с номером шага и причиной."""
+    """Пошаговое выполнение. При падении – PipelineError с номером шага и причиной."""
+
     started = datetime.now()
     log.info("Запуск сценария '%s' (%d шагов)", scenario_name or "inline", len(steps))
     out = df.copy()

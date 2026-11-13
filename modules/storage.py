@@ -1,4 +1,5 @@
 """Хранилище: настройки, сценарии, история запусков, отчёты (SQLite)."""
+
 import json
 import sqlite3
 from datetime import datetime
@@ -10,10 +11,10 @@ from utils.logger import get_logger
 
 log = get_logger("storage")
 #Cхема БД:
- #   settings -- настройки приложения(key-value)
-#    scenarios -- сохранение сценарии обработки
-#    history --история запусков сценариев
-#    reports -- отчёты
+#    settings – настройки приложения(key-value)
+#    scenarios – сохранение сценарии обработки
+#    history – история запусков сценариев
+#    reports – отчёты
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS settings (
     key   TEXT PRIMARY KEY,
@@ -51,7 +52,7 @@ CREATE TABLE IF NOT EXISTS reports (
 
 
 class Storage:
-    """Обёртка над SQLite. Все чтения/записи — через методы."""
+    """Обёртка над SQLite. Все чтения/записи – через методы."""
 
     def __init__(self, db_path: str | Path) -> None:
         self.db_path = Path(db_path)
@@ -74,7 +75,7 @@ class Storage:
             self._conn.close()
             self._conn = None
 
-    # ---------- settings ----------
+    # settings
     def set_setting(self, key: str, value: Any) -> None:
         self._require_conn()
         try:
@@ -94,7 +95,7 @@ class Storage:
         ).fetchone()
         return json.loads(row["value"]) if row else default
 
-    # ---------- scenarios ----------
+    # scenarios
     def save_scenario(self, name: str, steps: list[dict]) -> int:
         self._require_conn()
         now = datetime.now().isoformat(timespec="seconds")
@@ -123,7 +124,7 @@ class Storage:
         rows = self._conn.execute("SELECT name FROM scenarios ORDER BY name").fetchall()
         return [r["name"] for r in rows]
 
-    # ---------- history ----------
+    # history 
     def add_history(self, **fields: Any) -> int:
         self._require_conn()
         cols = ", ".join(fields.keys())
@@ -145,7 +146,7 @@ class Storage:
         ).fetchall()
         return [dict(r) for r in rows]
 
-    # ---------- reports ----------
+    # reports
     def save_report(self, kind: str, payload: dict) -> int:
         self._require_conn()
         try:
@@ -159,7 +160,7 @@ class Storage:
         except sqlite3.Error as e:
             raise StorageError(f"save_report failed: {e}") from e
 
-    # ---------- internal ----------
+    # internal 
     def _require_conn(self) -> None:
         if self._conn is None:
             raise StorageError("Соединение с БД закрыто")

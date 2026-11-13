@@ -1,4 +1,5 @@
 """Тесты обработки ошибочных файлов: отсутствующий файл, битый JSON."""
+
 from pathlib import Path
 
 import pytest

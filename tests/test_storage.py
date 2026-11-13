@@ -1,4 +1,5 @@
 """Тесты SQLite-хранилища: настройки, сценарии, история."""
+
 from modules.storage import Storage
 
 

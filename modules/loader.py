@@ -1,4 +1,5 @@
 """Загрузка данных из CSV/JSON/TXT/XLSX, объединение, потоковое чтение."""
+
 import csv
 import json as _json
 from pathlib import Path
@@ -21,6 +22,7 @@ _SUPPORTED = {"csv", "json", "txt", "xlsx"}
 
 def _detect_format(path: Path) -> str:
     """Определяет формат по расширению."""
+
     ext = path.suffix.lower().lstrip(".")
     if ext not in _SUPPORTED:
         raise UnsupportedFormatError(f"Формат .{ext} не поддерживается: {path}")
@@ -28,7 +30,8 @@ def _detect_format(path: Path) -> str:
 
 
 def _detect_delimiter(path: Path, encoding: str) -> str:
-    """Автоопределение разделителя CSV через csv.Sniffer, дефолт — ';' или ','."""
+    """Автоопределение разделителя CSV через csv.Sniffer, дефолт – ';' или ','."""
+
     try:
         with path.open("r", encoding=encoding, newline="") as f:
             sample = f.read(8192)
@@ -47,6 +50,7 @@ def load_file(
     has_header: bool = True,
 ) -> pd.DataFrame:
     """Загружает один файл. fmt = 'csv'|'json'|'txt'|'xlsx' или авто по расширению."""
+
     p = Path(path)
     if not p.exists():
         raise LoadError(f"Файл не найден: {p}")
@@ -100,6 +104,7 @@ def load_multiple(
 
     schema_mapping: {filename: {old_col: new_col}} для приведения колонок.
     """
+
     frames: list[pd.DataFrame] = []
     loaded, rejected = 0, 0
 
@@ -139,6 +144,7 @@ def iter_chunks(
     **kwargs,
 ) -> Iterator[pd.DataFrame]:
     """Генератор частей файла (для потоковой обработки). CSV/TXT/XLSX."""
+    
     p = Path(path)
     if not p.exists():
         raise LoadError(f"Файл не найден: {p}")

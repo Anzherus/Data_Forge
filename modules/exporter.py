@@ -1,4 +1,5 @@
 """Экспорт результатов в CSV/JSON/XLSX + сохранение отчётов."""
+
 import json
 from pathlib import Path
 
@@ -27,6 +28,7 @@ def export(
     fmt: str | None = None,
 ) -> None:
     """Экспорт DataFrame с выбором колонок. Исходный df не изменяется."""
+
     p = Path(path)
     p.parent.mkdir(parents=True, exist_ok=True)
     fmt = _infer_format(p, fmt)
@@ -55,6 +57,7 @@ def export(
 
 def save_report(report: dict, path: str | Path, fmt: str = "json") -> None:
     """Сохраняет отчёт о выполненных операциях (JSON или CSV)."""
+    
     p = Path(path)
     p.parent.mkdir(parents=True, exist_ok=True)
     try:

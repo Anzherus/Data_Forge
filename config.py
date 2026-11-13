@@ -1,4 +1,5 @@
 """Конфигурация проекта: загрузка/сохранение настроек (JSON)."""
+
 import json
 from dataclasses import dataclass, asdict, field
 from pathlib import Path
@@ -16,6 +17,7 @@ CONFIG_PATH = ROOT / "config.json"
 @dataclass
 class AppConfig:
     """Настройки приложения (сохраняются между запусками)."""
+
     data_dir: str = "data"
     processed_dir: str = "processed"
     reports_dir: str = "reports"
@@ -37,6 +39,7 @@ class AppConfig:
 
 def load_config(path: Path = CONFIG_PATH) -> AppConfig:
     """Загружает конфиг. Если файла нет — создаёт дефолтный и сохраняет."""
+
     if not path.exists():
         cfg = AppConfig()
         save_config(cfg, path)
@@ -51,6 +54,7 @@ def load_config(path: Path = CONFIG_PATH) -> AppConfig:
 
 def save_config(cfg: AppConfig, path: Path = CONFIG_PATH) -> None:
     """Сохраняет конфиг в JSON."""
+    
     try:
         path.write_text(
             json.dumps(asdict(cfg), ensure_ascii=False, indent=2),

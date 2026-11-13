@@ -1,4 +1,5 @@
 """Настройка технического журнала (отделён от истории сценариев)."""
+
 import logging
 from pathlib import Path
 
@@ -11,6 +12,7 @@ _FORMAT = "%(asctime)s | %(levelname)-8s | %(name)s | %(message)s"
 
 def setup_logger(name: str = "dataforge", level: int = logging.INFO) -> logging.Logger:
     """Создаёт/возвращает настроенный logger. Идемпотентно."""
+
     logger = logging.getLogger(name)
     if logger.handlers:
         return logger
@@ -29,4 +31,5 @@ def setup_logger(name: str = "dataforge", level: int = logging.INFO) -> logging.
 
 def get_logger(module_name: str) -> logging.Logger:
     """Логгер для конкретного модуля, например get_logger('loader')."""
+    
     return setup_logger(f"dataforge.{module_name}")
