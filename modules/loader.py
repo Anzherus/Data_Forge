@@ -1,5 +1,6 @@
 """Загрузка данных из CSV/JSON/TXT/XLSX, объединение, потоковое чтение."""
 import csv
+import json as _json
 from pathlib import Path
 from typing import Iterator
 
@@ -65,10 +66,13 @@ def load_file(
                 header=0 if has_header else None,
             )
         elif fmt == "json":
-            df = pd.read_json(p, encoding=encoding)
-            # нормализация вложенных объектов, если есть
-            if df.shape[1] == 1 and df.iloc[:, 0].dtype == object:
-                df = pd.json_normalize(df.iloc[:, 0])
+            data = _json.loads(p.read_text(encoding=encoding))
+            if isinstance(data, list):
+                df = pd.json_normalize(data)
+            elif isinstance(data, dict):
+                df = pd.DataFrame(data)
+            else:
+                raise CorruptedFileError(f"Неожиданный JSON в {p}")
         elif fmt == "xlsx":
             df = pd.read_excel(p, engine="openpyxl")
         else:
@@ -77,6 +81,8 @@ def load_file(
         raise EncodingError(f"Ошибка кодировки при чтении {p}: {e}") from e
     except pd.errors.ParserError as e:
         raise CorruptedFileError(f"Повреждённый файл {p}: {e}") from e
+    except _json.JSONDecodeError as e:
+        raise CorruptedFileError(f"Повреждённый JSON {p}: {e}") from e
     except ValueError as e:
         raise CorruptedFileError(f"Не удалось прочитать {p}: {e}") from e
 
@@ -111,7 +117,6 @@ def load_multiple(
     if not frames:
         raise LoadError("Ни один файл не удалось загрузить")
 
-    # проверка совместимости колонок
     base_cols = set(frames[0].columns)
     for i, df in enumerate(frames[1:], start=2):
         if set(df.columns) != base_cols:
@@ -151,7 +156,6 @@ def iter_chunks(
         ):
             yield chunk
     elif fmt == "xlsx":
-        # xlsx читаем целиком и режем вручную (openpyxl не умеет chunks)
         df = pd.read_excel(p, engine="openpyxl")
         for start in range(0, len(df), chunk_size):
             yield df.iloc[start:start + chunk_size].reset_index(drop=True)

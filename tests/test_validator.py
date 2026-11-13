@@ -1,3 +1,4 @@
+"""Тесты валидации: nulls, duplicates, constraints, outliers, bad_dates."""
 import pandas as pd
 
 from modules.validator import ValidationRules, validate

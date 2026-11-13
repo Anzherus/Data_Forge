@@ -71,8 +71,11 @@ def _normalize_freq(freq: str) -> str:
     """Приводит старые частоты pandas к новым (M→ME, Y→YE, Q→QE)."""
     return _FREQ_ALIASES.get(freq.upper(), freq)
 
+
 def temporal_stats(df: pd.DataFrame, column: str, freq: str = "D") -> pd.DataFrame:
-    """Агрегация по дням (D), неделям (W), месяцам (M) и т.д."""
+    """Агрегация по дням (D), неделям (W), месяцам (M) и год(YE).
+    Старые алиамы M/Y/Q автоматически приводятся к ME/YE/QE 
+    потому что pandas 3.x требует новые имена"""
     if column not in df.columns:
         raise ValidationError(f"Колонка не найдена: {column}")
     s = df[column]
@@ -91,7 +94,11 @@ def temporal_stats(df: pd.DataFrame, column: str, freq: str = "D") -> pd.DataFra
 
 
 def correlations(df: pd.DataFrame, columns: list[str] | None = None) -> dict:
-    """Матрица корреляций + пары с высоким |r| + оговорка про причинность."""
+    """Матрица корреляций + пары с высоким |r|>=0.7 + оговорка про причинность.
+    Возвращает:
+        matrix: {col:{col2:r}}-- матрица кореляций
+        high_pairs: [{a,b,r}] -- пары с |r|>=0.7
+        note: текст про ограничения интерпретации"""
     cols = columns or list(df.select_dtypes(include="number").columns)
     cols = [c for c in cols if c in df.columns]
     if len(cols) < 2:

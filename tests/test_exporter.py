@@ -1,3 +1,4 @@
+"""Тесты экспорта: CSV, JSON, XLSX, выбор колонок, отчёты."""
 import json
 from pathlib import Path
 

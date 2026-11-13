@@ -9,7 +9,11 @@ from utils.exceptions import StorageError
 from utils.logger import get_logger
 
 log = get_logger("storage")
-
+#Cхема БД:
+ #   settings -- настройки приложения(key-value)
+#    scenarios -- сохранение сценарии обработки
+#    history --история запусков сценариев
+#    reports -- отчёты
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS settings (
     key   TEXT PRIMARY KEY,

@@ -7,25 +7,23 @@ __pycache__/
 venv/
 env/
 
-# Данные (генерируются, не коммитим)
+# Данные (генерируются)
 data/*.csv
 data/*.json
 data/*.xlsx
 processed/*
-!processed/.gitkeep
-
-# База и логи (создаются при запуске)
+reports/*.json
 db/*.db
 logs/*.log
 
-# Отчёты бенчмарка (перегенерируются)
-reports/*.json
-
-# Локальные артефакты
+# Локальные конфиги
 config.json
 configs_clean.json
 steps.json
 *.report.json
+
+# Но .gitkeep оставляем
+!*/.gitkeep
 
 # IDE
 .vscode/

@@ -17,7 +17,8 @@ class Step:
     op: str
     params: dict
 
-
+#Реестр операций сценария: имя в JSON -> функция трансформации. 
+#Позволяет добавить новые операции без if/elif в _apply_step
 _OPERATIONS = {
     "rename_columns": T.rename_columns,
     "drop_columns": T.drop_columns,

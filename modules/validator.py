@@ -1,7 +1,7 @@
 """Проверка качества данных: 7 типов проблем."""
+import warnings
 from dataclasses import dataclass, field
 
-import numpy as np
 import pandas as pd
 
 from utils.logger import get_logger
@@ -12,12 +12,13 @@ log = get_logger("validator")
 @dataclass
 class ValidationRules:
     """Настраиваемые правила проверки."""
-    constraints: dict[str, dict] = field(default_factory=dict)  # {col: {min, max, allowed}}
+    constraints: dict[str, dict] = field(default_factory=dict)
     iqr_factor: float = 1.5
     zscore_threshold: float = 3.0
 
 
 def _check_nulls(df: pd.DataFrame) -> dict:
+    """Считает пустые ячейки по колонкам. count -- общее число NaN во всём DataFrame"""
     counts = df.isna().sum()
     fields = {c: int(v) for c, v in counts.items() if v > 0}
     return {
@@ -28,6 +29,7 @@ def _check_nulls(df: pd.DataFrame) -> dict:
 
 
 def _check_duplicates(df: pd.DataFrame) -> dict:
+    """Полные дубликаты строк (keep='first'). sample_indices--первые 20 индексов"""
     mask = df.duplicated(keep="first")
     return {
         "count": int(mask.sum()),
@@ -55,6 +57,7 @@ def _check_wrong_types(df: pd.DataFrame) -> dict:
 
 
 def _check_constraints(df: pd.DataFrame, rules: ValidationRules) -> dict:
+    """Проверяет колонки по рпавилам constraints: min/max/allowed."""
     problems: dict[str, int] = {}
     for col, rule in rules.constraints.items():
         if col not in df.columns:
@@ -77,13 +80,15 @@ def _check_constraints(df: pd.DataFrame, rules: ValidationRules) -> dict:
 
 
 def _check_bad_dates(df: pd.DataFrame) -> dict:
+    """Ищет невалидные даты в object-колонках, где >=50% значений похожи на даты"""
     problems: dict[str, int] = {}
     for col in df.select_dtypes(include=["object", "string"]).columns:
         s = df[col].dropna().astype(str)
         if s.empty:
             continue
-        parsed = pd.to_datetime(s, errors="coerce")
-        # считаем «похоже на дату» если хотя бы половина распарсилась
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            parsed = pd.to_datetime(s, errors="coerce")
         if parsed.notna().sum() >= len(s) * 0.5:
             bad = parsed.isna().sum()
             if bad > 0:
@@ -96,6 +101,7 @@ def _check_bad_dates(df: pd.DataFrame) -> dict:
 
 
 def _check_outliers(df: pd.DataFrame, rules: ValidationRules) -> dict:
+    """Выбросы по IQR: значения вне [Q1-k*IQR, Q3+k*IQR], k=rules.iqr_factor"""
     problems: dict[str, int] = {}
     numeric = df.select_dtypes(include="number")
     for col in numeric.columns:
@@ -118,9 +124,8 @@ def _check_outliers(df: pd.DataFrame, rules: ValidationRules) -> dict:
 
 
 def _check_suspicious(df: pd.DataFrame) -> dict:
-    """Противоречия: одинаковый id с разными значениями, отрицательные значения и т.п."""
+    """Противоречия: одинаковый id с разными значениями."""
     problems: dict[str, int] = {}
-    # дубли по id-подобным колонкам с расхождением в других
     for col in df.columns:
         if "id" in col.lower() and df[col].notna().any():
             grouped = df.groupby(col).nunique(dropna=True)

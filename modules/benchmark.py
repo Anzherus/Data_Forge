@@ -1,4 +1,4 @@
-"""Benchmark: 4 сравнения из ТЗ + сохранение результатов."""
+"""Benchmark: 4 сравнения из ТЗ + asyncio + сохранение результатов."""
 import asyncio
 import json
 import time
@@ -27,7 +27,6 @@ def time_it(fn: Callable, *args, **kwargs) -> tuple[float, object]:
 # ========== 1. Python loops vs NumPy ==========
 
 def zscore_python(values: list[float]) -> list[float]:
-    """Z-score через чистый Python."""
     n = len(values)
     if n == 0:
         return []
@@ -40,7 +39,6 @@ def zscore_python(values: list[float]) -> list[float]:
 
 
 def zscore_numpy(values: np.ndarray) -> np.ndarray:
-    """Z-score через NumPy (векторизация)."""
     mean = values.mean()
     std = values.std()
     if std == 0:
@@ -49,7 +47,11 @@ def zscore_numpy(values: np.ndarray) -> np.ndarray:
 
 
 def bench_numpy_vs_loops(n: int = 200_000, seed: int = 42) -> dict:
-    """Сравнение циклов и векторизации на z-score."""
+    """Сравнивает z-score через циклы Python и через NumPy.
+
+    n — размер массива, seed — для воспроизводимости.
+    Возвращает time, speedup, why_vectorized.
+    """
     rng = np.random.default_rng(seed)
     arr = rng.normal(size=n)
     lst = arr.tolist()
@@ -77,7 +79,12 @@ def bench_numpy_vs_loops(n: int = 200_000, seed: int = 42) -> dict:
 # ========== 2. Обычная vs потоковая обработка ==========
 
 def _streaming_stats(path: str, chunk_size: int) -> dict:
-    """Потоковая статистика: count, sum, mean, sum_sq, min, max."""
+    """Потоковая статистика по числовым колонкам.
+
+    Читает файл частями и накапливает count/sum/sum_sq/min/max без загрузки
+    всего файла в память. Результат должен совпасть с _inmemory_stats
+    (проверяется в bench_streaming_vs_memory, поле matched).
+    """
     count = 0
     total = 0.0
     total_sq = 0.0
@@ -109,6 +116,12 @@ def _streaming_stats(path: str, chunk_size: int) -> dict:
 
 
 def _inmemory_stats(df: pd.DataFrame) -> dict:
+    """Обычная статистика по всему DataFrame в памяти.
+
+    Используется как эталон для сверки с _streaming_stats.
+    sum_sq нужен для проверки, что потоковая обработка считает
+    не только сумму/среднее, но и квадраты.
+    """
     numeric = df.select_dtypes(include="number")
     if numeric.empty:
         return {"count": 0, "sum": 0.0, "sum_sq": 0.0, "min": None, "max": None, "mean": None}
@@ -124,7 +137,11 @@ def _inmemory_stats(df: pd.DataFrame) -> dict:
 
 
 def bench_streaming_vs_memory(path: str, chunk_size: int = 1000) -> dict:
-    """Сверяет результаты потоковой и обычной обработки + замеряет время."""
+    """Сверяет потоковую статистику с in-memory на одном файле.
+
+    Возвращает memory_sec, streaming_sec, matched и список mismatch
+    (раздел 15 ТЗ: результаты должны совпадать).
+    """
     try:
         df = load_file(path)
     except Exception as e:
@@ -133,7 +150,6 @@ def bench_streaming_vs_memory(path: str, chunk_size: int = 1000) -> dict:
     t_mem, mem = time_it(_inmemory_stats, df)
     t_str, stream = time_it(_streaming_stats, path, chunk_size)
 
-    # сверка (раздел 15 ТЗ) — результаты должны совпадать
     mismatch = []
     for key in ("count", "min", "max"):
         if mem[key] != stream[key]:
@@ -162,12 +178,21 @@ def bench_streaming_vs_memory(path: str, chunk_size: int = 1000) -> dict:
 # ========== 3. Последовательная vs многопоточная обработка ==========
 
 def _read_and_count(path: str) -> int:
+    """Читает файл и возвращает число строк.
+
+    Общая точка для последовательного, многопоточного и асинхронного
+    чтения — чтобы сравнивать одинаковую операцию.
+    """
     df = load_file(path)
     return int(len(df))
 
 
 def bench_threads_vs_seq(files: list[str], n_threads: int = 4) -> dict:
-    """Чтение и подготовка нескольких файлов: последовательно vs threads."""
+    """Сравнивает последовательное и многопоточное чтение файлов.
+
+    I/O-bound: threads дают выигрыш, потому что GIL отпускается на I/O.
+    matched проверяет, что число строк совпадает (нет потерь/дублей).
+    """
     if not files:
         raise BenchmarkError("Нет файлов для бенчмарка")
 
@@ -200,7 +225,11 @@ def bench_threads_vs_seq(files: list[str], n_threads: int = 4) -> dict:
 # ========== 4. Последовательная vs многопроцессорная обработка ==========
 
 def _process_chunk_iqr(args: tuple[pd.DataFrame, str]) -> int:
-    """CPU-bound операция над частью: количество аномалий по IQR в колонке."""
+    """Считает аномалии по IQR в части DataFrame.
+
+    ВАЖНО: функция верхнего уровня (не лямбда, не метод), иначе
+    ProcessPoolExecutor на Windows не сможет её запиклить.
+    """
     chunk, column = args
     return len(detect_iqr(chunk, column))
 
@@ -208,7 +237,12 @@ def _process_chunk_iqr(args: tuple[pd.DataFrame, str]) -> int:
 def bench_processes_vs_seq(
     df: pd.DataFrame, column: str, n_processes: int = 4, n_parts: int = 4
 ) -> dict:
-    """Поиск аномалий по частям: последовательно vs multiprocessing."""
+    """Сравнивает последовательный и многопроцессорный поиск аномалий.
+
+    CPU-bound (IQR): threads не помогут из-за GIL, нужны процессы.
+    df делится на n_parts непересекающихся частей, total_* проверяет,
+    что сумма аномалий совпадает (раздел 19 ТЗ: без потерь и дублей).
+    """
     if column not in df.columns:
         raise BenchmarkError(f"Колонка не найдена: {column}")
 
@@ -252,17 +286,27 @@ def bench_processes_vs_seq(
 # ========== 5. asyncio — конкурентное чтение файлов ==========
 
 async def _async_read(path: str) -> int:
-    """Корутина: блокирующее чтение через executor, чтобы не блокировать loop."""
-    loop = asyncio.get_event_loop()
+    """Корутина: читает файл через run_in_executor, чтобы не блокировать loop.
+
+    pd.read_csv — блокирующая функция, поэтому её нельзя вызывать напрямую
+    в корутине. run_in_executor выносит чтение в пул потоков, а await
+    отдаёт управление другим корутинам.
+    """
+    loop = asyncio.get_running_loop()
     return await loop.run_in_executor(None, _read_and_count, path)
 
 
 async def _async_read_all(files: list[str]) -> list[int]:
+    """Запускает все корутины _async_read конкурентно через asyncio.gather."""
     return await asyncio.gather(*[_async_read(f) for f in files])
 
 
 def bench_asyncio(files: list[str]) -> dict:
-    """Сравнение последовательного и асинхронного чтения нескольких файлов."""
+    """Сравнивает последовательное и асинхронное чтение файлов.
+
+    I/O-bound: корутины переключаются, пока одна ждёт диск.
+    why_asyncio объясняет, почему модель подходит.
+    """
     if not files:
         raise BenchmarkError("Нет файлов для asyncio-бенчмарка")
 
@@ -289,7 +333,7 @@ def bench_asyncio(files: list[str]) -> dict:
 # ========== Сохранение результатов ==========
 
 def save_benchmark(results: dict, path: str | Path) -> None:
-    """Сохраняет результаты в JSON."""
+    """Сохраняет все результаты в JSON. Папку создаёт при необходимости."""
     p = Path(path)
     p.parent.mkdir(parents=True, exist_ok=True)
     try:
@@ -309,7 +353,12 @@ def run_all(
     process_column: str,
     out_path: str | Path,
 ) -> dict:
-    """Запускает все 4 сравнения + asyncio и сохраняет отчёт."""
+    """Запускает все 5 сравнений и сохраняет отчёт.
+
+    files — список файлов для threads/asyncio,
+    stream_file — один файл для streaming vs memory,
+    df_for_processes + process_column — данные для processes.
+    """
     results = {
         "numpy_vs_loops": bench_numpy_vs_loops(),
         "streaming_vs_memory": bench_streaming_vs_memory(stream_file, chunk_size=1000),
