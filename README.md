@@ -1,17 +1,158 @@
 # DataForge
-Система загрузки, очистки, преобразования и анализа наборов данных.
+
+Система загрузки, очистки, преобразования и анализа наборов данных на Python.
+
+Проект выполнен по техническому заданию: поддерживает загрузку из нескольких форматов,
+валидацию качества, очистку, трансформацию, сценарии обработки, аналитику, поиск аномалий,
+потоковую обработку, параллелизм (asyncio / threads / processes) и benchmark.
 
 ## Установка
+
+```bash
 pip install -r requirements.txt
+```
+
+Требуется Python 3.13+.
 
 ## Быстрый старт
-python main.py generate --rows 1000 --cols 6 --nulls 0.1 --dups 0.1 --out data/gen.csv/n  
-python main.py inspect data/gen.csv  
-python main.py validate data/gen.csv  
-python main.py clean data/gen.csv --rules configs_clean.json --out processed/clean.csv  
-python main.py analyze processed/clean.csv  
-python main.py anomalies processed/clean.csv --column value_1 --method iqr  
-python main.py benchmark  
+
+### Интерактивное меню
+
+```bash
+python main.py
+```
+
+Показывает 13 действий: генерация, инспекция, валидация, очистка, аналитика,
+временной анализ, аномалии, экспорт, сценарии, benchmark, история, справка.
+Подходит для ручной работы и запуска в VS Code.
+
+### CLI для скриптов
+
+```bash
+# генерация тестовых данных
+python main.py generate --rows 1000 --cols 6 --nulls 0.1 --dups 0.1 --out data/gen.csv
+
+# инспекция структуры
+python main.py inspect data/gen.csv --head 5 --summary
+
+# проверка качества
+python main.py validate data/gen.csv
+
+# очистка по JSON-правилам
+python main.py clean data/gen.csv --rules configs_clean.json --out processed/clean.csv
+
+# аналитика
+python main.py analyze processed/clean.csv
+
+# поиск аномалий
+python main.py anomalies processed/clean.csv --column value_1 --method iqr
+
+# benchmark
+python main.py benchmark
+```
+
+Полная справка: `python main.py --help`
 
 ## Тесты
-pytest tests -v
+
+```bash
+python -m pytest tests -v
+```
+
+62 теста, покрывают: загрузку (CSV/JSON/ошибочные файлы), инспекцию, валидацию, очистку,
+трансформацию, сценарии, аналитику, аномалии, генератор, экспорт, SQLite-хранилище,
+потоковую обработку, NumPy vs loops, процессы vs последовательная обработка.
+
+> **Важно:** запускайте именно `python -m pytest`, а не просто `pytest` — это гарантирует,
+> что используется тот же Python, что и `python`, и корень проекта попадает в `sys.path`.
+
+## Возможности
+
+- **Загрузка**: CSV, JSON, TXT (с разделителями), XLSX; автоопределение разделителя и кодировки; объединение совместимых наборов; потоковое чтение частями
+- **Инспекция**: количество строк и колонок, типы, уникальные значения, пропуски, min/max, min/max дат, head/tail, summary
+- **Валидация**: 7 типов проблем (nulls, дубликаты, некорректные типы, ограничения, некорректные даты, выбросы, противоречия), настраиваемые правила
+- **Очистка**: удаление дубликатов, удаление/заполнение пропусков (фиксированным значением, средним, медианой), strip, регистр, приведение типов, удаление по условиям
+- **Трансформация**: rename, drop, вычисляемые столбцы, merge/split, datetime, sort, filter, groupby, join с обработкой unmatched
+- **Сценарии**: сохранение последовательности шагов в SQLite и воспроизведение; при падении — сообщение с номером шага
+- **Аналитика**: числовая (count/sum/mean/median/min/max/std/quartiles), категориальная (unique/freq/top), временная (D/W/ME/YE), корреляции с оговоркой про причинность, сводные таблицы, сравнение групп
+- **Аномалии**: IQR, z-score, пользовательские границы; **не удаляются автоматически**, сохраняются с полем `criterion`
+- **Потоковая обработка**: чтение частями, накопление статистики, проверка совпадения с in-memory (`matched=True`)
+- **Параллелизм**: asyncio (I/O-bound), threading (I/O-bound), multiprocessing (CPU-bound) с проверкой отсутствия потерь/дублей
+- **Benchmark**: 5 сравнений (NumPy vs loops, streaming vs memory, threads vs seq, processes vs seq, asyncio vs seq), результаты в JSON
+- **Экспорт**: CSV, JSON, XLSX; выбор колонок; отчёт о выполненных операциях
+- **История**: SQLite-таблица `history` с датой, сценарием, входными/выходными строками, ошибками, временем
+- **Логирование**: отдельно от истории, в `logs/app.log`
+
+## Структура
+
+```
+dataforge/
+├── main.py              # CLI + интерактивное меню
+├── config.py            # настройки (JSON + dataclass)
+├── pytest.ini           # конфигурация pytest
+├── requirements.txt
+├── README.md
+├── modules/             # бизнес-логика (12 модулей)
+│   ├── loader.py        # загрузка CSV/JSON/TXT/XLSX, объединение, потоковое чтение
+│   ├── inspector.py     # структура набора данных
+│   ├── validator.py     # 7 типов проблем качества
+│   ├── cleaner.py       # 8 операций очистки
+│   ├── transformer.py   # 9 операций трансформации + join
+│   ├── pipeline.py      # сценарии: Step, сохранение, воспроизведение
+│   ├── analyzer.py      # аналитика: числовая, категориальная, временная, корреляции
+│   ├── anomaly_detector.py  # IQR, z-score, bounds
+│   ├── exporter.py      # экспорт CSV/JSON/XLSX + отчёты
+│   ├── storage.py       # SQLite: настройки, сценарии, история, отчёты
+│   ├── benchmark.py     # 5 сравнений производительности
+│   └── generator.py     # генерация тестовых данных с seed
+├── utils/
+│   ├── exceptions.py    # иерархия исключений (DataForgeError → LoadError → ...)
+│   └── logger.py        # настройка технического журнала
+├── tests/               # 62 pytest-теста
+├── data/                # исходные данные (генерируются)
+├── processed/           # результаты обработки
+├── reports/             # benchmark.json и отчёты
+├── logs/                # app.log
+└── db/                  # dataforge.db (история, сценарии)
+```
+
+## Архитектура
+
+- **Бизнес-логика вынесена в `modules/`** — `main.py` только вызывает функции, не содержит логики
+- **ООП там, где упрощает**: `Storage` (инкапсуляция SQLite), `Step` и `ValidationRules` (dataclass), `ChunkIterator` (протокол итератора), иерархия исключений (наследование)
+- **Функции там, где ООП не нужно**: `loader`, `validator`, `cleaner`, `transformer`, `analyzer`, `anomaly_detector`, `exporter`, `benchmark`, `generator` — чистые преобразования без состояния
+- **Исходные файлы не изменяются** — очистка работает с копией DataFrame в памяти
+- **Результаты сохраняются отдельно** — в `processed/`, отчёты в `reports/`
+
+## Benchmark
+
+Запуск: `python main.py benchmark`
+
+Сравнивает 5 пар операций:
+
+| Сравнение | Что меряет | Ожидаемый результат |
+|---|---|---|
+| NumPy vs loops | z-score на 200k значений | NumPy быстрее в 20+ раз (векторизация) |
+| streaming vs memory | статистика по частям vs целиком | `matched=True` — результаты совпадают |
+| threads vs seq | чтение 4 файлов | на маленьких данных threads могут быть медленнее из-за накладных расходов |
+| processes vs seq | поиск аномалий по IQR по частям | `matched=True` — без потерь/дублей |
+| asyncio vs seq | конкурентное чтение 4 файлов | на маленьких данных asyncio может быть медленнее |
+
+Результаты сохраняются в `reports/benchmark.json` с полями `seq_sec`, `parallel_sec`, `speedup`, `matched` и текстовым `why_*` с обоснованием выбора модели.
+
+> **Замечание:** на маленьких данных (сотни строк) threads/asyncio не дают выигрыша —
+> `pd.read_csv` занимает микросекунды, а создание потоков/корутин — миллисекунды.
+> Для демонстрации ускорения используйте файлы 20k+ строк и несколько копий
+> (threads/asyncio сравнивают чтение **нескольких** файлов).
+
+## Требования ТЗ
+
+Проект закрывает все 30 разделов ТЗ:
+
+- **Разделы 3–8** — загрузка, инспекция, валидация, очистка, трансформация, сценарии
+- **Разделы 9–11** — аналитика, корреляции с оговоркой про причинность, аномалии без автоудаления
+- **Разделы 12–13** — Pandas + NumPy со сравнением с циклами
+- **Разделы 14–20** — генератор с seed, потоковая сверка, генераторы/итератор, asyncio, threading, multiprocessing, benchmark
+- **Разделы 21–24** — экспорт, история в SQLite, логирование отдельно, хранение между запусками
+- **Разделы 25–27** — CLI + меню, архитектура по модулям, обработка 10 типов ошибок
+- **Разделы 28–30** — 62 теста, type hints, ООП, сквозной цикл
